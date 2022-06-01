@@ -14,14 +14,13 @@ import (
 var wg sync.WaitGroup
 
 func main() {
-	//get pathName from terminal
-	//example: go run main.go -p pathName
+	//get pathName by argument, example: go run main.go -p "pathName"
 	var pathName string
 	flag.StringVar(&pathName, "p", "", "pathName")
 	flag.Parse()
 
 	//call the getFileName function
-	fileName, err := getFileName(pathName)
+	fileName, err := getAllFileName(pathName)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -58,7 +57,7 @@ func getMD5(fileName string, isParallel bool) {
 	fmt.Println(fileName, hex.EncodeToString(sum[:]))
 }
 
-func getFileName(pathName string) ([]string, error) {
+func getAllFileName(pathName string) ([]string, error) {
 	result := []string{}
 
 	//try to read the path, if fail, return empty result
@@ -71,7 +70,7 @@ func getFileName(pathName string) ([]string, error) {
 		fullname := pathName + "/" + fi.Name()
 		if fi.IsDir() {
 			//if fullname is a direction, get in this direction to read file name
-			temp, err := getFileName(fullname)
+			temp, err := getAllFileName(fullname)
 			if err != nil {
 				fmt.Println(err)
 			} else {
