@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -14,8 +15,10 @@ var wg sync.WaitGroup
 
 func main() {
 	//get pathName from terminal
+	//example: go run main.go -p pathName
 	var pathName string
-	fmt.Scanln(&pathName)
+	flag.StringVar(&pathName, "p", "pathName", "pathName")
+	flag.Parse()
 
 	//call the getFileName function
 	fileName, err := getFileName(pathName)
