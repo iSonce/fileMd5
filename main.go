@@ -17,7 +17,7 @@ func main() {
 	//get pathName from terminal
 	//example: go run main.go -p pathName
 	var pathName string
-	flag.StringVar(&pathName, "p", "pathName", "pathName")
+	flag.StringVar(&pathName, "p", "", "pathName")
 	flag.Parse()
 
 	//call the getFileName function
@@ -26,38 +26,42 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	length := len(fileName)
 
-	//parallel
-	start := time.Now()
-	wg.Add(len(fileName))
-	for i := 0; i < len(fileName); i++ {
-		go func(s string) {
-			defer wg.Done()
-			file, _ := os.ReadFile(s)
-			sum := md5.Sum(file)
-			fmt.Println(s, hex.EncodeToString(sum[:]))
-		}(fileName[i])
+	//parallel run
+	begin := time.Now()
+	wg.Add(length)
+	for i := 0; i < length; i++ {
+		//create a new routine
+		go getMD5(fileName[i], true)
 	}
 	wg.Wait()
-	parallel := time.Since(start).Seconds()
+	parallel := time.Since(begin).Seconds()
 
-	//serial
-	start = time.Now()
-	for i := 0; i < len(fileName); i++ {
-		file, _ := os.ReadFile(fileName[i])
-		sum := md5.Sum(file)
-		fmt.Println(fileName[i], hex.EncodeToString(sum[:]))
+	//serial run
+	begin = time.Now()
+	for i := 0; i < length; i++ {
+		getMD5(fileName[i], false)
 	}
-	serial := time.Since(start).Seconds()
+	serial := time.Since(begin).Seconds()
 
 	fmt.Println("parallel time: ", parallel)
 	fmt.Println("serial time: ", serial)
 }
 
+func getMD5(fileName string, isParallel bool) {
+	if isParallel {
+		defer wg.Done()
+	}
+	file, _ := os.ReadFile(fileName)
+	sum := md5.Sum(file)
+	fmt.Println(fileName, hex.EncodeToString(sum[:]))
+}
+
 func getFileName(pathName string) ([]string, error) {
 	result := []string{}
 
-	//try to read the path
+	//try to read the path, if fail, return empty result
 	fis, err := ioutil.ReadDir(pathName)
 	if err != nil {
 		return result, err
@@ -71,6 +75,7 @@ func getFileName(pathName string) ([]string, error) {
 			if err != nil {
 				fmt.Println(err)
 			} else {
+				//add the result of getFileName to result, it may be empty
 				result = append(result, temp...)
 			}
 		} else {
